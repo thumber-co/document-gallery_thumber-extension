@@ -40,8 +40,8 @@ class DocumentGalleryThumberExtension {
       include_once self::$path . 'thumber-client/client.php';
       
       ThumberClient::setCallback(array(__CLASS__, 'webhookCallback'));
-      ThumberClient::setUid('ecf110e1-d64d-47b0-8c7c-54c851d4e8ea');
-      ThumberClient::setUserSecret('_lWFVAlNnNEkNn83jbFKcVZ_DVKQN1ha4g9RHnvsbAM');
+      ThumberClient::setUid('TODO');
+      ThumberClient::setUserSecret('TODO');
    }
 
    /**

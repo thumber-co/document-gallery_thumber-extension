@@ -18,7 +18,7 @@ class ThumberClient
 
    private static $thumberClientPath;
 
-   const ThumberServerHost = 'api.lvh.me:3000';
+   const ThumberServerHost = 'api.thumber.co';
 
    const ThumberServerCreatePath = '/create.json';
 
