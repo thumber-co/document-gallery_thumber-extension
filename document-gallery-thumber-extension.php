@@ -72,7 +72,7 @@ class DocumentGalleryThumberExtension {
          DG_Thumber::setThumbnail($ID, $tmpfile, array(__CLASS__, 'getThumberThumbnail'));
       } elseif (self::logEnabled()) {
          $ID = (count($split) > 0) ? $split[0] : $nonce;
-         DG_Logger::writeLog(DG_LogLevel::Warning, "Thumber failed for $ID: " . $resp->getError());
+         DG_Logger::writeLog(DG_LogLevel::Warning, "Thumber failed for attachment #$ID: " . $resp->getError());
       }
    }
    
