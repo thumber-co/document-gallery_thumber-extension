@@ -16,7 +16,7 @@ add_action('admin_post_nopriv_' . DocumentGalleryThumberExtension::ThumberAction
 
 add_filter('upload_mimes', array('DocumentGalleryThumberExtension', 'customUploadMimeTypes'));
 
-    DocumentGalleryThumberExtension::init();
+DocumentGalleryThumberExtension::init();
 class DocumentGalleryThumberExtension {
 
    const ThumberAction = 'dg_thumber_extension';
@@ -77,7 +77,7 @@ class DocumentGalleryThumberExtension {
    }
    
    public static function allowThumberWebhooks($origin, $origin_arg) {
-      return $origin || (isset($_REQUEST['action']) && $_REQUEST['action'] === DG_THUMBER_ACTION);
+      return $origin || (isset($_REQUEST['action']) && $_REQUEST['action'] === self::ThumberAction);
    }
     
    /**
