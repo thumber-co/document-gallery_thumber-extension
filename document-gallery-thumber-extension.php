@@ -3,17 +3,16 @@ defined('WPINC') OR exit;
 
 /*
  Plugin Name: Document Gallery - Thumber Extension
-Plugin URI: http://wordpress.org/extend/plugins/document-gallery/
-Description: An extension for the Document Gallery plugin to support Thumber.co API.
-Version: 1.0
-Author: Dan Rossiter
-Author URI: http://danrossiter.org/
+ Plugin URI: http://wordpress.org/extend/plugins/document-gallery/
+ Description: An extension for the Document Gallery plugin to support Thumber.co API.
+ Version: 1.0
+ Author: Dan Rossiter
+ Author URI: http://danrossiter.org/
 */
 
 add_action('dg_thumbers', array('DocumentGalleryThumberExtension', 'thumbersFilter'));
 add_filter('allowed_http_origin', array('DocumentGalleryThumberExtension', 'allowThumberWebhooks'), 10, 2);
 add_action('admin_post_nopriv_' . DocumentGalleryThumberExtension::ThumberAction, array('ThumberClient', 'receiveResponse'), 5, 0);
-
 add_filter('upload_mimes', array('DocumentGalleryThumberExtension', 'customUploadMimeTypes'));
 
 DocumentGalleryThumberExtension::init();
@@ -58,8 +57,6 @@ class DocumentGalleryThumberExtension {
     */
    public static function webhookCallback($resp) {
       include_once self::$path . 'thumber-client/response.php';
-
-      DG_Logger::writeLog(DG_LogLevel::Detail, 'Entering webhook callback.');
       
       $nonce = $resp->getNonce();
       $split = explode(self::$nonce_separator, $nonce);
@@ -70,9 +67,11 @@ class DocumentGalleryThumberExtension {
          file_put_contents($tmpfile, $resp->getDecodedData());
          
          DG_Thumber::setThumbnail($ID, $tmpfile, array(__CLASS__, 'getThumberThumbnail'));
+
+         DG_Logger::writeLog(DG_LogLevel::Detail, "Received thumbnail from Thumber for attachment #{$split[0]}.");
       } elseif (self::logEnabled()) {
          $ID = (count($split) > 0) ? $split[0] : $nonce;
-         DG_Logger::writeLog(DG_LogLevel::Warning, "Thumber failed for attachment #$ID: " . $resp->getError());
+         DG_Logger::writeLog(DG_LogLevel::Warning, "Thumber was unable to process attachment #$ID: " . $resp->getError());
       }
    }
    
