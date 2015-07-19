@@ -1,5 +1,4 @@
 <?php
-defined('WPINC') OR exit;
 
 include_once 'transaction.php';
 
