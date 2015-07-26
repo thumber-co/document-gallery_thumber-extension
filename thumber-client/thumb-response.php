@@ -1,8 +1,11 @@
 <?php
 
-include_once 'transaction.php';
+include_once 'thumb-transaction.php';
 
-class ThumberResp extends ThumberTransaction {
+/**
+ * Class ThumberThumbResp Object representation of response from Thumber following thumbnail generation.
+ */
+class ThumberThumbResp extends ThumberThumbTransaction {
    /**
     * @var bool Whether the related ThumberReq was successful.
     */
@@ -65,11 +68,11 @@ class ThumberResp extends ThumberTransaction {
    /**
     * Creates a ThumberResp instance from the given JSON.
     * @param string $json The JSON to create instance from.
-    * @return ThumberResp|NULL The resultant object from parsing the JSON.
+    * @return ThumberThumbResp|NULL The resultant object from parsing the JSON.
     */
    public static function parseJson($json) {
       try {
-         return new ThumberResp($json);
+         return new ThumberThumbResp($json);
       } catch (InvalidArgumentException $e) {
          return null;
       }

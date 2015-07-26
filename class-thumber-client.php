@@ -60,6 +60,10 @@ class DG_ThumberClient extends ThumberClient {
 
 		switch ($type) {
 			case 'GET':
+				if (!empty($body)) {
+					$args['body'] = $body;
+				}
+
 				$resp = wp_remote_get($url, $args);
 				break;
 
@@ -95,9 +99,11 @@ class DG_ThumberClient extends ThumberClient {
 	 * If not using client.php as the webhook, whoever receives webhook response should first invoke this method to
 	 * validate response.
 	 */
-	public function receiveResponse() {
-		$resp = parent::receiveResponse();
-
+	public function receiveThumbResponse() {
+		$resp = parent::receiveThumbResponse();
+		if (is_null($resp)) {
+			return;
+		}
 
 		$nonce = $resp->getNonce();
 		$split = explode(DocumentGalleryThumberExtension::NonceSeparator, $nonce);

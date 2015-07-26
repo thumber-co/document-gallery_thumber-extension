@@ -1,31 +1,11 @@
 <?php
 
-include_once 'transaction.php';
+include_once 'thumb-transaction.php';
 
-class ThumberReq extends ThumberTransaction {
-   /**
-    * @var string The UID for API user.
-    */
-   protected $uid;
-   
-   /**
-    * Sets the UID.
-    * 
-    * @param string $uid The UID.
-    */
-   public function setUid($uid) {
-      $this->uid = $uid;
-   }
-   
-   /**
-    * Gets the UID.
-    * 
-    * @return string The UID.
-    */
-   public function getUid() {
-      return $this->uid;
-   }
-   
+/**
+ * Class ThumberThumbReq Object representation of request sent to Thumber in order to get thumbnail for a file.
+ */
+class ThumberThumbReq extends ThumberThumbTransaction {
    /**
     * @var string The local URL that will be POSTed to with generated thumbnail. 
     */
@@ -146,10 +126,10 @@ class ThumberReq extends ThumberTransaction {
    public function getMimeType() {
       return $this->mimeType;
    }
-   
+
    /**
     * (non-PHPdoc)
-    * @see ThumberTransaction::isValid()
+    * @see ThumberBaseTransaction::isValid()
     */
    public function isValid($secret = null) {
       $data = $this->getEncodedData();
@@ -161,13 +141,13 @@ class ThumberReq extends ThumberTransaction {
    }
 
    /**
-    * Creates a ThumberReq instance from the given JSON.
+    * Creates a ThumberThumbReq instance from the given JSON.
     * @param string $json The JSON to create instance from.
-    * @return ThumberReq|NULL The resultant object from parsing the JSON.
+    * @return ThumberThumbReq|NULL The resultant object from parsing the JSON.
     */
    public static function parseJson($json) {
       try {
-         return new ThumberReq($json);
+         return new ThumberThumbReq($json);
       } catch (InvalidArgumentException $e) {
          return null;
       }

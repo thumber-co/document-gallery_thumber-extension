@@ -16,7 +16,7 @@ include_once plugin_dir_path(__FILE__) . 'class-thumber-client.php';
 add_action('dg_thumbers', array('DocumentGalleryThumberExtension', 'thumbersFilter'));
 add_filter('allowed_http_origin', array('DocumentGalleryThumberExtension', 'allowThumberWebhooks'), 10, 2);
 add_filter('upload_mimes', array('DocumentGalleryThumberExtension', 'customMimeTypes'));
-add_action('admin_post_nopriv_' . DocumentGalleryThumberExtension::ThumberAction, array(DG_ThumberClient::getInstance(), 'receiveResponse'), 5, 0);
+add_action('admin_post_nopriv_' . DocumentGalleryThumberExtension::ThumberAction, array(DG_ThumberClient::getInstance(), 'receiveThumbResponse'), 5, 0);
 
 DocumentGalleryThumberExtension::init();
 class DocumentGalleryThumberExtension {
@@ -109,11 +109,16 @@ class DocumentGalleryThumberExtension {
     */
    public static function getThumberThumbnail($ID, $pg = 1) {
       if (self::logEnabled()) {
-         DG_Logger::writeLog(DG_LogLevel::Detail, "Getting thumbnail for $ID.");
+         DG_Logger::writeLog(DG_LogLevel::Detail, "Getting thumbnail for attachment #$ID.");
       }
 
       include_once self::$path . 'thumber-client/client.php';
-      include_once self::$path . 'thumber-client/request.php';
+      include_once self::$path . 'thumber-client/thumb-request.php';
+
+      if (!self::checkFilesize(get_attached_file($ID))) {
+         DG_Logger::writeLog(DG_LogLevel::Detail, "Skipping attachment #$ID as it exceeds Thumber.co subscription limits.");
+         return false;
+      }
 
       $url = wp_get_attachment_url($ID);
       $mime_type = get_post_mime_type($ID);
@@ -125,7 +130,7 @@ class DocumentGalleryThumberExtension {
       $options = DocumentGallery::getOptions();
       $geometry = "{$options['thumber']['width']}x{$options['thumber']['height']}";
 
-      $req = new ThumberReq();
+      $req = new ThumberThumbReq();
       $req->setCallback(self::$webhook);
       $req->setMimeType($mime_type);
       $req->setNonce($ID. self::NonceSeparator . md5(microtime()));
@@ -133,14 +138,12 @@ class DocumentGalleryThumberExtension {
       $req->setUrl($url);
       $req->setGeometry($geometry);
 
-      $resp = self::$client->sendRequest($req);
+      $resp = self::$client->sendThumbRequest($req);
 
       if (self::logEnabled())
       {
          if (is_wp_error($resp)) {
             DG_Logger::writeLog(DG_LogLevel::Error, 'Failed to post: ' . $resp->get_error_message());
-         } else {
-            DG_Logger::writeLog(DG_LogLevel::Detail, 'Response: ' . $resp['body']);
          }
       }
 
@@ -152,6 +155,16 @@ class DocumentGalleryThumberExtension {
     */
    public static function logEnabled() {
       return class_exists('DG_Logger') && DG_Logger::logEnabled();
+   }
+
+   /**
+    * @param string $filename File to be tested.
+    * @return bool Whether file is acceptable to be sent to Thumber.
+    */
+   private static function checkFilesize($filename) {
+      $sub = self::$client->getSubscription();
+      $size = filesize($filename);
+      return empty($sub) || ($size > 0 && $size <= $sub->file_size_limit);
    }
 
    /**

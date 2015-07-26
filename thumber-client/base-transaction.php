@@ -1,6 +1,13 @@
 <?php
 
-abstract class ThumberTransaction {
+/**
+ * Class ThumberBaseTransaction The base transaction class which performs all necessary cryptographic work in addition
+ * to reflectively (de)serializing JSON for all transactions.
+ *
+ * Any request with no fields other than those required for authentication may be sent directly using this class,
+ * other requests with custom parameters will need to extend this class.
+ */
+class ThumberBaseTransaction {
    /**
     * Constructs new ThumberTransaction instance.
     * 
@@ -10,6 +17,29 @@ abstract class ThumberTransaction {
       if (!is_null($json)) {
          $this->fromJson($json);
       }
+   }
+
+   /**
+    * @var string The UID for API user. Note that only requests will set this value.
+    */
+   protected $uid;
+
+   /**
+    * Sets the UID.
+    *
+    * @param string $uid The UID.
+    */
+   public function setUid($uid) {
+      $this->uid = $uid;
+   }
+
+   /**
+    * Gets the UID.
+    *
+    * @return string The UID.
+    */
+   public function getUid() {
+      return $this->uid;
    }
    
    /**
@@ -87,76 +117,13 @@ abstract class ThumberTransaction {
    }
    
    /**
-    * The base64-encoded data.
-    * 
-    * @var string base64-encoded data.
-    */
-   protected $data;
-   
-   /**
-    * Sets the base64-encoded data.
-    * 
-    * @param string $data The base64-encoded data.
-    */
-   public function setEncodedData($data) {
-      $this->data = $data;
-      $this->decodedData = null;
-   }
-   
-   /**
-    * Gets the base64-encoded data.
-    * 
-    * NOTE: If only raw data is initialized, this method will populate the base64-encoded data from that value.
-    * 
-    * @return string The base64-encoded data.
-    */
-   public function getEncodedData() {
-      if (empty($this->data) && !empty($this->decodedData)) {
-         $this->data = base64_encode($this->decodedData);
-      }
-      
-      return $this->data;
-   }
-   
-   /**
-    * The raw file data.
-    * 
-    * @var data Raw data read from file.
-    */
-   private $decodedData;
-   
-   /**
-    * Gets the raw file data.
-    * 
-    * @param data $decodedData The raw file data.
-    */
-   public function setDecodedData($decodedData) {
-      $this->decodedData = $decodedData;
-      $this->data = null;
-   }
-   
-   /**
-    * Gets the raw file data.
-    * 
-    * NOTE: If only base64 data is initialized, this method will populate the raw data from that value.
-    * 
-    * @return data The raw file data.
-    */
-   public function getDecodedData() {
-      if (empty($this->decodedData) && !empty($this->data)) {
-         $this->decodedData = base64_decode($this->data);
-      }
-      
-      return $this->decodedData;
-   }
-   
-   /**
     * Whether this instance is valid. If secret is provided, then validity will include checksum validation.
     * 
     * @param string $secret The user secret.
     * @return bool Whether this instance is valid.
     */
    public function isValid($secret = null) {
+      // NOTE: Doesn't check UID because this class is used in representing req & resp. Not ideal solution.
       return isset($this->nonce) &&
          isset($this->timestamp) &&
          isset($this->checksum) &&
@@ -184,7 +151,6 @@ abstract class ThumberTransaction {
       unset($arr['checksum']);
       
       // only use up to the first 1024 characters of each value in computing checksum
-      // encode any special characters in value
       foreach ($arr as &$v) {
          if (is_bool($v)) {
             $v = $v ? 'true' : 'false';
@@ -195,22 +161,19 @@ abstract class ThumberTransaction {
 
       ksort($arr, SORT_STRING);
 
-      $query = self::implode('=', '&', $arr);
-      return hash_hmac('sha256', $query, $secret, false);
+      return hash_hmac('sha256', $this->toQuery($arr), $secret, false);
    }
    
    /**
-    * Gets array represenation of this instance.
+    * Gets array representation of this instance reflectively. Any public/protected instance variables in this
+    * or any extending classes will be included.
     * 
     * @return array Array representation of this instance.
     */
    public function toArray() {
-     // force generation of Base64 data if not yet generated
-     $this->getEncodedData();
-      
      $ret = array();
      
-     foreach(get_object_vars($this) as $k => $v) {
+     foreach($this as $k => $v) {
         if (is_null($v)) continue;
         
         // camel case to underscore word delineation
@@ -220,9 +183,17 @@ abstract class ThumberTransaction {
      
      return $ret;
    }
-   
+
    /**
-    * Creates JSON string with class fields, renaming field names to underscore rather than cammel.
+    * @param array|NULL $arr The array to be converted. If null, $this->toArray() is used.
+    * @return string The resultant query string.
+    */
+   public function toQuery($arr = null) {
+      return self::implode('=', '&', !is_null($arr) ? $arr : $this->toArray());
+   }
+
+   /**
+    * Creates JSON string with class fields, renaming field names to underscore rather than camel.
     * 
     * @return string JSON representation of defined object accessible non-static properties.
     */
@@ -242,7 +213,7 @@ abstract class ThumberTransaction {
       }
       
       foreach ($json as $k => $v) {
-         // underscore word deliniation to cammel case
+         // underscore word delineation to camel case
          $k = preg_replace_callback('/_([a-z])/', array (__CLASS__, 'secondCharToUpper'), $k);
          if (property_exists($this, $k)) {
             $this->$k = $v;
