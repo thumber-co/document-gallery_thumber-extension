@@ -156,7 +156,7 @@ class ThumberClient {
    public function sendRequest($req, $type, $path) {
       include_once self::$thumberClientPath . 'base-transaction.php';
 
-      if (!is_a($req, 'ThumberBaseTransaction', false)) {
+      if (!is_a($req, 'ThumberBaseTransaction')) {
          $err = 'Request must be of type ThumberBaseTransaction.';
          $this->handleError($err);
          return array('error' => $err);
