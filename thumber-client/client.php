@@ -183,7 +183,8 @@ class ThumberClient {
          $changed = true;
       }
 
-      if ($changed) {
+      $checksum = $req->getChecksum();
+      if ($changed || empty($checksum)) {
          $req->setChecksum($req->computeChecksum(self::$userSecret));
       }
 
