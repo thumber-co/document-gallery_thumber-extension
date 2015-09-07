@@ -22,6 +22,11 @@ DocumentGalleryThumberExtension::init();
 class DocumentGalleryThumberExtension {
 
    /**
+    * Whether to send Thumber base64-encoded file contents instead of URL pointing to file.
+    */
+   const UseDirectFileUpload = false;
+
+   /**
     * @const string Name of the action performed in the webhook.
     */
    const ThumberAction = 'dg_thumber_extension';
@@ -115,15 +120,18 @@ class DocumentGalleryThumberExtension {
       include_once self::$path . 'thumber-client/client.php';
       include_once self::$path . 'thumber-client/thumb-request.php';
 
-      if (!self::checkFilesize(get_attached_file($ID))) {
+      $url_or_path = get_attached_file($ID);
+      if (!self::checkFilesize($url_or_path)) {
          DG_Logger::writeLog(DG_LogLevel::Detail, "Skipping attachment #$ID as it exceeds Thumber.co subscription limits.");
          return false;
       }
 
-      $url = wp_get_attachment_url($ID);
       $mime_type = get_post_mime_type($ID);
+      if (!self::UseDirectFileUpload) {
+         $url_or_path = wp_get_attachment_url($ID);
+      }
 
-      if (!$url || !$mime_type) {
+      if (!$url_or_path || !$mime_type) {
          return false;
       }
 
@@ -135,13 +143,17 @@ class DocumentGalleryThumberExtension {
       $req->setMimeType($mime_type);
       $req->setNonce($ID. self::NonceSeparator . md5(microtime()));
       $req->setPg($pg);
-      $req->setUrl($url);
       $req->setGeometry($geometry);
+
+      if (self::UseDirectFileUpload) {
+         $req->setDecodedData(file_get_contents($url_or_path));
+      } else {
+         $req->setUrl($url_or_path);
+      }
 
       $resp = self::$client->sendThumbRequest($req);
 
-      if (self::logEnabled())
-      {
+      if (self::logEnabled()) {
          if (is_wp_error($resp)) {
             DG_Logger::writeLog(DG_LogLevel::Error, 'Failed to post: ' . $resp->get_error_message());
          }
