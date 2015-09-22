@@ -154,8 +154,8 @@ class DocumentGalleryThumberExtension {
       $resp = self::$client->sendThumbRequest($req);
 
       if (self::logEnabled()) {
-         if (is_wp_error($resp)) {
-            DG_Logger::writeLog(DG_LogLevel::Error, 'Failed to post: ' . $resp->get_error_message());
+         if ($resp['http_code'] < 200 || $resp['http_code'] > 399) {
+            DG_Logger::writeLog(DG_LogLevel::Error, 'Failed to transmit to server: ' . $resp['body']);
          }
       }
 

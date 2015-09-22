@@ -47,10 +47,12 @@ class DG_ThumberClient extends ThumberClient {
 			$headers[trim($kvp[0])] = trim($kvp[1]);
 		}
 
+		// NOTE: Failure was local so not actual HTTP error, but makes error checking much
+		// simpler if we set the value to something above the success range
 		$result = array (
+			'http_code'       => 600,
 			'header'          => '',
 			'body'            => '',
-			'http_code'       => '',
 			'last_url'        => ''
 		);
 		$args = array(
@@ -83,11 +85,10 @@ class DG_ThumberClient extends ThumberClient {
 
 		if (isset($resp)) {
 			if (!is_wp_error($resp)) {
-				$result['body'] = $resp['body'];
 				$result['http_code'] = $resp['response']['code'];
+				$result['body'] = $resp['body'];
 			} else {
-				$result['error'] = $resp->get_error_message();
-				$result['http_code'] = $resp->get_error_code();
+				$result['body'] = $resp->get_error_message();
 			}
 		}
 
